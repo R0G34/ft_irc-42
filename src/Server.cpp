@@ -308,7 +308,8 @@ void Server::disconnectClient(int fd)
         Channel *ch = it->second;
         ch->disconnectUser(client);
         // Si quieres gestionar el Bot:
-        if (ch->getUserCount() == 1 && ch->hasUser("Bot")) {
+        if (ch->getUserCount() == 1 && ch->hasUser("Bot")) 
+		{
             int botFd = ch->getUserFd("Bot");
             std::map<int, Client*>::iterator itBot = _clients.find(botFd);
             if (itBot != _clients.end())
@@ -319,6 +320,7 @@ void Server::disconnectClient(int fd)
     // 2) Quitar fd de epoll y cerrar socket
     if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
         throw std::runtime_error("When removing client from epoll instance");
+		
     if (close(fd) < 0)
         throw std::runtime_error("When closing client socket");
     
