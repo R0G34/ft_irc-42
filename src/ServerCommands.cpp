@@ -30,7 +30,8 @@ void	Server::initCmds()
 }
 
 // Crea o inicializa los recursos necesarios.
-std::string Server::makePrefix(int fd) {
+std::string Server::makePrefix(int fd) 
+{
   return ":" + _clients[fd]->getNickname()
        + "!" + _clients[fd]->getUsername()
        + _clients[fd]->GetIp();
@@ -60,7 +61,8 @@ void Server::answerClient(int fdClient, int code, const std::string &target, con
 
 
 // Envía datos o mensajes al cliente o al canal correspondiente.
-void Server::sendMsgToClient(int fd, const std::string &cmd, const std::string &channel, const std::string &msg) {
+void Server::sendMsgToClient(int fd, const std::string &cmd, const std::string &channel, const std::string &msg) 
+{
 	std::string prefix = makePrefix(fd);
 	std::string response = prefix + " " + cmd + " " + channel;
 	
@@ -72,7 +74,8 @@ void Server::sendMsgToClient(int fd, const std::string &cmd, const std::string &
 }
 
 // Método de la clase void Server que realiza la operación principal asociada.
-void Server::msgClientToClient(int from, int to, const std::string &cmd, const std::string &msg) {
+void Server::msgClientToClient(int from, int to, const std::string &cmd, const std::string &msg) 
+{
 	std::string prefix = makePrefix(from);
 	std::string response = prefix + " " + cmd + " " + _clients[to]->getNickname();
 	
@@ -100,7 +103,8 @@ void	Server::sendWelcomeMsg(int fdClient)
 // Método de la clase void	Server que realiza la operación principal asociada.
 void	Server::joinGeneralChannel(int fdClient)
 {
-	if (_channel.find("#general") == _channel.end()) {
+	if (_channel.find("#general") == _channel.end()) 
+	{
         Channel *newChannel = new Channel("#general");
         _channel.insert(std::pair<std::string, Channel*>("#general", newChannel));
     }
@@ -115,39 +119,63 @@ void Server::handleCommand(t_msg& msg, int fdClient)
 {
 	if (_clients[fdClient]->getRegistrationState() != RS_Registered)
 	{
-		if (msg.command == "CAP") {
+		if (msg.command == "CAP") 
+		{
 			CmCAP(msg, fdClient);
-			return ;
-		}
-		if (_clients[fdClient]->getRegistrationState() == RS_NoPass && msg.command == "PASS")
-			CmPass(msg, fdClient);
-		else if (_clients[fdClient]->getRegistrationState() == RS_PassValidated && msg.command == "PASS")
+		}		
+		else if(msg.command == "PASS")
 		{
-			_clients[fdClient]->setRegistrationState(RS_NoPass);
 			CmPass(msg, fdClient);
 		}
-		else if (_clients[fdClient]->getRegistrationState() == RS_PassValidated && msg.command == "NICK")
-			CmNick(msg, fdClient);
-		else if (_clients[fdClient]->getRegistrationState() == RS_NickValidated  && msg.command == "USER")
+		else if(msg.command == "NICK")
+		{
+			CmNick(msg, fdClient); 	
+		}
+		else if(msg.command == "USER")
+		{
 			CmUser(msg, fdClient);
+			if (_clients[fdClient]->getRegistrationState() == RS_Registered)
+			{
+				sendWelcomeMsg(fdClient);
+				joinGeneralChannel(fdClient);
+			}
+		}	
+		else
+			answerClient(fdClient, ERR_UNKNOWNCOMMAND, "", "Unknown command (" + msg.command + "). Remember that command must be UPPERCASE.");
+			
+		
+		//DMK ORIGINAL
+		// if (_clients[fdClient]->getRegistrationState() == RS_NoPass && msg.command == "PASS")
+		// 	CmPass(msg, fdClient);
+		// else if (_clients[fdClient]->getRegistrationState() == RS_PassValidated && msg.command == "PASS")
+		// {
+		// 	_clients[fdClient]->setRegistrationState(RS_NoPass);
+		// 	CmPass(msg, fdClient);
+		// }
+		// else if (_clients[fdClient]->getRegistrationState() == RS_PassValidated && msg.command == "NICK")
+		// 	CmNick(msg, fdClient);
+		// else if (_clients[fdClient]->getRegistrationState() == RS_NickValidated  && msg.command == "USER")
+		// 	CmUser(msg, fdClient);
 
-		if (_clients[fdClient]->getRegistrationState() == RS_Registered)
-		{
-			sendWelcomeMsg(fdClient);
-			joinGeneralChannel(fdClient);
-		}
-		return ;
+		// if (_clients[fdClient]->getRegistrationState() == RS_Registered)
+		// {
+		// 	sendWelcomeMsg(fdClient);
+		// 	joinGeneralChannel(fdClient);
+		// }
+		//return ;
 	}
-
-	std::map<std::string, FCmd>::iterator it = _fCommands.find(msg.command);
-	if (it != _fCommands.end()) 
-	{
-		std::cout << it->first << std::endl;
-		FCmd func = it->second;
-		(this->*func)(msg, fdClient);
-	} 
 	else
-		answerClient(fdClient, ERR_UNKNOWNCOMMAND, "", _clients[fdClient]->getNickname() + " Unknown command");
+	{
+		std::map<std::string, FCmd>::iterator it = _fCommands.find(msg.command);
+		if (it != _fCommands.end()) 
+		{
+			std::cout << it->first << std::endl;
+			FCmd func = it->second;
+			(this->*func)(msg, fdClient);
+		} 
+		else
+			answerClient(fdClient, ERR_UNKNOWNCOMMAND, "", _clients[fdClient]->getNickname() + ": Unknown command (" + msg.command + "). Remember that command must be UPPERCASE.");
+	}
 }
 
 

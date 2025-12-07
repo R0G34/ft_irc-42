@@ -8,6 +8,16 @@
 // Método de la clase void	Server que realiza la operación principal asociada.
 void	Server::CmUser(t_msg& msg, int fdClient)
 {
+	if(_clients[fdClient]->getRegistrationState() != RS_NickValidated && 
+	   _clients[fdClient]->getRegistrationState() != RS_Registered)
+	{
+		if(_clients[fdClient]->getRegistrationState() == RS_PassValidated)
+			answerClient(fdClient, ERR_ALREADYREGISTERED, "", "After validate your password, you must register your NICK (NICK xxxx)."); //DMK CONSTANTE DE ERR??
+		else
+			answerClient(fdClient, ERR_ALREADYREGISTERED, "", "First, you must validate password (PASS xxxx). Then register your nick (NICK zzzz)."); //DMK CONSTANTE DE ERR??
+		return ;
+	}
+
 	if (_clients[fdClient]->getRegistrationState() == RS_Registered)
 	{
 		answerClient(fdClient, ERR_ALREADYREGISTERED, "", "You may not reregister");
