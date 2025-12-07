@@ -25,7 +25,7 @@ void	runSignals() {
 int	parseArgs(const std::string &port, const std::string &password) 
 {
 	for (size_t i = 0; i < port.size(); ++i) 
-	{
+	{//DMK
 		if (!std::isdigit(port[i]))
 			throw std::invalid_argument("Port must be a number.");
 		if (port[i] == '0' && i == 0)
