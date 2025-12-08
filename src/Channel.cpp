@@ -37,9 +37,16 @@ int Channel::getUserFd(const std::string &nick) const {
 }
 
 // Devuelve el atributo correspondiente.
-std::string Channel::getMode() const {
-	std::string modes = "+";
-	for (std::set<char>::const_iterator it = _mode.begin(); it != _mode.end(); ++it) {
+std::string Channel::getMode() const 
+{
+	
+	std::string modes = "";
+	for (std::set<char>::const_iterator it = _mode.begin(); it != _mode.end(); ++it) 
+	{
+		if (modes.size() == 0)
+			modes += "+";
+		else 
+			modes += ", +";
 		modes += *it;
 	}
 	return modes;
@@ -179,7 +186,8 @@ void Channel::removeBannedList(Client *client) {
 }
 
 // Añade elementos o información a las estructuras internas.
-void Channel::addAdminList(Client *client) {
+void Channel::addAdminList(Client *client) 
+{
 	if (_admins.find(client->getFd()) != _admins.end())
 		throw std::runtime_error("User already admin of this channel.");
 	_admins.insert(std::make_pair(client->getFd(), client));

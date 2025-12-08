@@ -139,7 +139,8 @@ bool	isSpecial(char c);
 std::string currentDateTimeString();
 
 template<typename T>
-static size_t stringtoint( const T & s ) {
+static size_t stringtoint( const T & s ) 
+{
     size_t i;
     // Función auxiliar que realiza la operación principal asociada.
     std::istringstream(s) >> i;
@@ -147,7 +148,8 @@ static size_t stringtoint( const T & s ) {
 }
 
 template<typename T>
-std::string to_string(const T &value) {
+std::string to_string(const T &value) 
+{
     std::ostringstream oss;
     oss << value;
     // Función auxiliar que realiza la operación principal asociada.
@@ -155,11 +157,15 @@ std::string to_string(const T &value) {
 }
 
 template<typename T>
-void splitCmd(const std::string &cmd, T &result, const char del) {
+void splitCmd(const std::string &cmd, T &result, const char del) 
+{
 	size_t start = 0;
 	size_t comma;
-	while ((comma = cmd.find(del, start)) != std::string::npos) {
-		if (comma == start) {
+	while ((comma = cmd.find(del, start)) != std::string::npos) 
+	{
+		if (comma == start) 
+		{
+			result.push_back("");
 			start++;
 			continue;
 		}

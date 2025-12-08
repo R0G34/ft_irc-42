@@ -22,6 +22,12 @@ void	Server::sendMsgChangeNick(std::string newNick, int fdClient)
 // Método de la clase void Server que realiza la operación principal asociada.
 void Server::CmNick(t_msg& msg, int fdClient)
 {
+	if(_clients[fdClient]->getRegistrationState() != RS_PassValidated)
+	{
+		answerClient(fdClient, ERR_NONICKNAMEGIVEN, "", "Before register your Nick, you must validate password (PASS xxxx)"); //DMK DEFINIR CONSTANTE DE ERROR SI ES NECESARIO
+		return;
+	}
+
 	if (msg.params.empty() && msg.trailing.size() == 0)
 	{
 		answerClient(fdClient, ERR_NONICKNAMEGIVEN, "", "No nickname given");

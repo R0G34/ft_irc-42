@@ -6,86 +6,147 @@
 #include <Server.hpp>
 
 // JOIN <channel>{,<channel>} [<key>{,<key>}]
-void Server::CmJoin(t_msg &msg, int fd) {
-	if (msg.params.size() < 1 || msg.params.size() > 2) {
-		answerClient(fd, ERR_NEEDMOREPARAMS, "JOIN", "Not enough parameters");
+void Server::CmJoin(t_msg &msg, int fd) 
+{
+	if (msg.params.size() < 1) 
+	{
+		answerClient(fd, ERR_NEEDMOREPARAMS, "JOIN", "Not enough parameters. You must past 1 or 2 parameters");
+		return ;
+	}
+	if (msg.params.size() > 2) {
+		answerClient(fd, ERR_NEEDMOREPARAMS, "JOIN", "Too much parameters. You must past 1 or 2 parameters");
 		return ;
 	}
 
 	std::vector<std::string> channels;
 	std::vector<std::string> passwords;
 
+// if(passwords.size() == 0)
+// 	std::cout << "No falla sin inicializar el vector del password" << std::endl;
+
 	splitCmd(msg.params[0], channels, ',');
+
+// std::cout << "Probando la salida del split." << std::endl;
+// size_t ind = -1;
+// while (++ind < channels.size())
+// {
+// 	std::cout << "Channel " << ind << ": " << channels[ind] << std::endl;
+// }
+
 	if (msg.params.size() == 2)
 		splitCmd(msg.params[1], passwords, ',');
 
-	for (size_t i = 0; i < channels.size(); ++i) {
-		if ((channels[i][0] != '#' && channels[i][0] != '&') && channels[i] != "0") {
-			answerClient(fd, ERR_BADCHANMASK, "", "Channel name must start with #, & or 0");
-			return ;
+	for (size_t i = 0; i < channels.size(); ++i) 
+	{
+// std::cout << "************** " + channels[i] + " ***************" << std::endl;
+		std::string errMsg = "Error joinning channel named (" + channels[i] + "): ";
+		if ((channels[i][0] != '#' && channels[i][0] != '&') && channels[i] != "0") 
+		{
+			errMsg += "Channel name must start with #, & or 0";
+			answerClient(fd, ERR_BADCHANMASK, "", errMsg);
+			continue ;
 		}
-		if (channels[i] == "0") {
-			if (channels.size() > 1 || msg.params.size() > 1) {
+		if (channels[i] == "0") 
+		{
+			if (channels.size() > 1 || msg.params.size() > 1) 
+			{
 				answerClient(fd, ERR_NEEDMOREPARAMS, "JOIN", "Channel '0' must be used alone");
-				return ;
+				continue ;
 			}
+
 			std::string partChannels;
-			for (std::map<std::string, Channel *>::iterator it = _channel.begin(); it != _channel.end(); ++it) {
-				if (it->second->hasUser(fd)) {
+			for (std::map<std::string, Channel *>::iterator it = _channel.begin(); it != _channel.end(); ++it) 
+			{
+				if (it->second->hasUser(fd)) 
+				{
 					if (!partChannels.empty())
 						partChannels += ",";
 					partChannels += it->first;
 				}
 			}
-			if (!partChannels.empty()) {
+			if (!partChannels.empty()) 
+			{
 				t_msg partMsg;
 				partMsg.command = "PART";
 				partMsg.params.push_back(partChannels);
 				CmPart(partMsg, fd);
 			}
 		}
-		else {
-			if (channels[i].size() < 2) {
-				answerClient(fd, ERR_NOSUCHCHANNEL, channels[i], "Channel name is too short");
+		else 
+		{
+			if (channels[i].size() < 2) 
+			{
+				errMsg += "Channel name is too short";
+				answerClient(fd, ERR_NOSUCHCHANNEL, channels[i], errMsg);
 				continue ;
 			}
-			if (_clients[fd]->getChannels().size() >= _maxChannelUsers) {
-				answerClient(fd, ERR_TOOMANYCHANNELS, channels[i], "You have reached the maximum number of channels");
+
+			if (_clients[fd]->getChannels().size() >= _maxChannelUsers) 
+			{
+				errMsg += "Channel has reached the maximum number of channels";
+				answerClient(fd, ERR_TOOMANYCHANNELS, channels[i], errMsg);
 				continue ;
 			}
-			if (_channel.find(channels[i]) == _channel.end()) {
+
+			if (_channel.find(channels[i]) == _channel.end()) 
+			{
 				Channel *newChannel = new Channel(channels[i]);
-				if (passwords.size() > i && !passwords[i].empty()) {
+				if (passwords.size() > i && !passwords[i].empty()) 
+				{
 					newChannel->setPass(passwords[i]);
 					newChannel->setMode('k');
 				}
 				_channel.insert(std::pair<std::string, Channel*>(channels[i], newChannel));
 			}
-			if (_channel[channels[i]]->hasUser(fd)) {
-				answerClient(fd, ERR_ALREADYONCHANNEL, channels[i], "You are already in the channel");
+
+			if (_channel[channels[i]]->hasUser(fd)) 
+			{
+				errMsg += "You are already in the channel";
+				answerClient(fd, ERR_ALREADYONCHANNEL, channels[i], errMsg);
 				continue ;
 			}
-			if (_channel[channels[i]]->hasMode('l') && _channel[channels[i]]->getUserCount() >= _channel[channels[i]]->getMaxUsers()) {
-				answerClient(fd, ERR_CHANNELISFULL, channels[i], "Channel is full (+l)");
-				continue ;
-			}
-			if (_channel[channels[i]]->hasMode('k')) {
-				if (passwords.size() <= i || passwords[i] != _channel[channels[i]]->getPass()) {
-					answerClient(fd, ERR_BADCHANNELKEY, channels[i], "Cannot join channel (+k)");
+
+			if (_channel[channels[i]]->hasMode('b')) 
+			{
+				if (_channel[channels[i]]->isBanned(fd)) 
+				{
+					errMsg += "You are banned by admin. Cannot join to channel (+b)";
+					answerClient(fd, ERR_BANNEDFROMCHAN, channels[i], errMsg);
 					continue ;
 				}
 			}
-			if (_channel[channels[i]]->hasMode('i')) {
-				if (!_channel[channels[i]]->isInvited(fd)) {
-					answerClient(fd, ERR_INVITEONLYCHAN, channels[i], "Cannot join channel (+i)");
+
+			if (_channel[channels[i]]->hasMode('i')) 
+			{
+				if (!_channel[channels[i]]->isInvited(fd)) 
+				{
+					errMsg += "Cannot join channel (+i)";
+					answerClient(fd, ERR_INVITEONLYCHAN, channels[i], errMsg);
 					continue ;
 				}
-				else
+				else //DUDA NO SE EL MOTIVO POR EL QUE QUITA DE LA LISTA
 					_channel[channels[i]]->removeInvitedList(_clients[fd]);
 			}
-			if (_channel[channels[i]]->hasMode('b')) {
-				if (_channel[channels[i]]->isBanned(fd)) {
-					answerClient(fd, ERR_BANNEDFROMCHAN, channels[i], "Cannot join channel (+b)");
+
+			if (_channel[channels[i]]->hasMode('l') && _channel[channels[i]]->getUserCount() >= _channel[channels[i]]->getMaxUsers()) 
+			{
+				errMsg += "Channel is full (+l)";//. Maximum users permited: " + _channel[channels[i]]->getMaxUsers().to_string();
+				answerClient(fd, ERR_CHANNELISFULL, channels[i], errMsg);
+				continue ;
+			}
+
+			if (_channel[channels[i]]->hasMode('k')) 
+			{
+				if (passwords.size() <= i ) 
+				{
+					errMsg += "Cannot join channel (+k). You need password to join.";
+					answerClient(fd, ERR_BADCHANNELKEY, channels[i], errMsg);
+					continue ;
+				}
+				if (passwords[i] != _channel[channels[i]]->getPass()) 
+				{
+					errMsg += "Wrong password (" + passwords[i] + "). Cannot join channel (+k)";
+					answerClient(fd, ERR_BADCHANNELKEY, channels[i], errMsg);
 					continue ;
 				}
 			}

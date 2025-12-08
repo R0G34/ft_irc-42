@@ -45,7 +45,8 @@ Server::~Server() {
 }
 
 // Inicializa el estado interno o los recursos necesarios.
-void Server::init() {
+void Server::init() 
+{
 	_socketFd = socket(AF_INET, SOCK_STREAM, 0);
 	if (_socketFd < 0) 
 		throw std::runtime_error("Creating the socket server");
@@ -214,15 +215,24 @@ t_msg	Server::parseMsg(std::string fullMsg)
 void	Server::readMsg(int fd)
 {
 	/* NOTE: */
-	std::cout << "Event received from fd: " << fd << std::endl;
+	// if (_clients.find(fd) == _clients.end())
+    //     return;
 
+	std::cout << "Event received from fd: " << fd << std::endl;
+	
 	char	msg[MAX_BYTES_MSG];
 	std::memset(msg, 0, sizeof(msg));
 
 	int bytes_recived =  recv(fd, &msg, MAX_BYTES_MSG, 0);
 
-	if (bytes_recived < 0)
-		throw std::runtime_error("On recv()");
+	if (bytes_recived < 0) {
+		disconnectClient(fd);
+		return;
+	}
+		/*throw std::runtime_error("On recv()");*/
+
+	// if (_clients.find(fd) == _clients.end())
+	// 	return;
 
     std::string aux = _clients[fd]->getBufferMsgClient();
     aux.append(msg, bytes_recived);
@@ -241,41 +251,116 @@ void	Server::readMsg(int fd)
 
         t_msg parsedMsg = parseMsg(fullMsg);
 		handleCommand(parsedMsg, fd);
+		if (_clients.find(fd) == _clients.end())
+			return ;
     }
 }
 
 // Método de la clase void Server que realiza la operación principal asociada.
-void Server::disconnectClient(int fd) {
+void Server::disconnectClient(int fd) 
+{
+	/*
 	if (_clients.find(fd) == _clients.end()) 
 		throw std::runtime_error("Trying to disconnect a client that does not exist");
+
+	std::cout << "disconnectClient 1 DMK" << std::endl;
 	
 	Client *client = _clients[fd];
-	for (std::map<std::string, Channel *>::iterator it = _channel.begin(); it != _channel.end(); ++it) {
+	for (std::map<std::string, Channel *>::iterator it = _channel.begin(); it != _channel.end(); ++it) 
+	{
 		_channel[it->first]->disconnectUser(client);
 		if (_channel[it->first]->getUserCount() == 1 && _channel[it->first]->hasUser("Bot"))
 			_channel[it->first]->disconnectUser(_clients[_channel[it->first]->getUserFd("Bot")]);
 	}
+
+	std::cout << "disconnectClient 2 DMK" << std::endl;
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
 		throw std::runtime_error("When removing client from epoll instance");
+
+	std::cout << "disconnectClient 3 DMK" << std::endl;	
 	if (close(fd) < 0) 
 		throw std::runtime_error("When closing client socket");
+
+	std::cout << "disconnectClient 4 DMK" << std::endl;
 	delete client;
+	
+	std::cout << "disconnectClient 5 DMK" << std::endl;
 	_clients.erase(fd);
-	for (std::map<std::string, Channel *>::iterator it = _channel.begin(); it != _channel.end(); ) {
-		if (it->second->getUserCount() == 0) {
-			delete it->second;
-			std::map<std::string, Channel *>::iterator toErase = it++;
-			_channel.erase(toErase);
-		} else {
-			++it;
+	std::cout << "disconnectClient 6 DMK" << std::endl;
+
+	std::map<std::string, Channel *>::iterator it_begin = _channel.begin();
+	std::map<std::string, Channel *>::iterator it_end = _channel.end();
+	for (std::map<std::string, Channel *>::iterator it = it_begin; it != it_end; it++) 
+	{
+		std::cout << "disconnectClient 7 DMK: channel: " << _channel[it->first]->getName() << ", Número usuarios: " << _channel[it->first]->getUserCount() << std::endl;
+		if (NULL != _channel[it->first] && _channel[it->first]->getUserCount() == 0) 
+		{
+			std::cout << "disconnectClient 8 DMK" << std::endl;
+			delete _channel[it->first];
+			std::cout << "disconnectClient 9 DMK" << std::endl;
+//DMK 
+			_channel.erase(it->first);
+			std::cout << "disconnectClient 10 DMK" << std::endl;
 		}
-	}
+	}*/
 	/* NOTE: */
-	std::cout << GREEN << "Client disconnected successfully." << CLEAR << std::endl;
+	//std::cout << GREEN << "Client disconnected successfully." << CLEAR << std::endl;
+
+
+    // Buscar el cliente primero
+    std::map<int, Client*>::iterator itClient = _clients.find(fd);
+    if (itClient == _clients.end())
+        throw std::runtime_error("Trying to disconnect a client that does not exist");
+    Client *client = itClient->second;
+    
+	// 1) Sacar al cliente de todos los canales (sin borrar canales aún)
+    for (std::map<std::string, Channel *>::iterator it = _channel.begin(); it != _channel.end(); ++it)
+    {
+        Channel *ch = it->second;
+        ch->disconnectUser(client);
+        // Si quieres gestionar el Bot:
+        if (ch->getUserCount() == 1 && ch->hasUser("Bot")) 
+		{
+            int botFd = ch->getUserFd("Bot");
+            std::map<int, Client*>::iterator itBot = _clients.find(botFd);
+            if (itBot != _clients.end())
+                ch->disconnectUser(itBot->second);
+        }
+    }
+
+    // 2) Quitar fd de epoll y cerrar socket
+    if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
+        throw std::runtime_error("When removing client from epoll instance");
+		
+    if (close(fd) < 0)
+        throw std::runtime_error("When closing client socket");
+    
+	// 3) Borrar el Client y sacarlo del map
+    delete client;
+    _clients.erase(itClient);
+    
+	// 4) Borrar canales vacíos con patrón seguro
+    for (std::map<std::string, Channel *>::iterator it = _channel.begin(); it != _channel.end(); )
+    {
+        Channel *ch = it->second;
+        if (ch->getUserCount() == 0) 
+		{
+            std::map<std::string, Channel*>::iterator toErase = it;
+			++it;
+            _channel.erase(toErase);
+            delete ch;
+        } else 
+		{
+            ++it;
+        }
+    }
+    std::cout << "Client disconnected successfully.\n";
+	
 }
 
 // Método de la clase void  Server que realiza la operación principal asociada.
-void  Server::manageServerInput() {
+void  Server::manageServerInput() 
+{
 	std::string input;
 	std::getline(std::cin, input);
 	if (input.empty())
@@ -336,38 +421,65 @@ void  Server::manageServerInput() {
 }
 
 // Ejecuta el bucle principal o pone en marcha el componente.
-void Server::run() {
+void Server::run() 
+{
 	epoll_event events[MAX_EVENTS];
 
-	while (_running) {
+	while (_running) 
+	{
 		std::cout << PINK << "Waiting for events..." << CLEAR << std::endl << std::endl;
 		int numEvents = epoll_wait(_epollFd, events, MAX_EVENTS, -1);
-		if (numEvents < 0) {
-			if (errno == EINTR) {
+		std::cout << PINK << "RUN DMK 1..." << CLEAR << std::endl << std::endl;
+		if (numEvents < 0) 
+		{
+			std::cout << PINK << "RUN DMK 2..." << CLEAR << std::endl << std::endl;
+			if (errno == EINTR) 
+			{
 				std::cout << "Closing server by signal..." << std::endl;
 				_running = false;
-				continue;
+				return; //continue;
 			}
+			std::cout << PINK << "RUN DMK 3..." << CLEAR << std::endl << std::endl;
 			throw std::runtime_error("When waiting for events");
 		}
-		try {
-			for (int i = 0; i < numEvents; i++) {
+		try 
+		{
+			std::cout << PINK << "RUN DMK 4..." << CLEAR << std::endl << std::endl;
+			for (int i = 0; i < numEvents; i++) 
+			{
+				std::cout << PINK << "RUN DMK 5..." << CLEAR << std::endl << std::endl;
 				if (events[i].data.fd == STDIN_FILENO) 
+				{
+					std::cout << PINK << "RUN DMK 6..." << CLEAR << std::endl << std::endl;
 					manageServerInput();
+				}
 				else if (events[i].data.fd == _socketFd)
+				{
+					std::cout << PINK << "RUN DMK 7..." << CLEAR << std::endl << std::endl;
 					connectNewClient();
-				else {
+				}
+				else 
+				{
+					std::cout << PINK << "RUN DMK 8..." << CLEAR << std::endl << std::endl;
 					int fd = events[i].data.fd;
 
 					if (events[i].events & EPOLLIN)
+					{
+						std::cout << PINK << "RUN DMK 9..." << CLEAR << std::endl << std::endl;
 						readMsg(fd);
+					}
 					if (events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
+					{
+						std::cout << PINK << "RUN DMK 10..." << CLEAR << std::endl << std::endl;
 						disconnectClient(fd);
+					}
 				}
 			}
 		}
-		catch (const std::exception &e) {
+		catch (const std::exception &e) 
+		{
 			std::cerr << RED << "Error: " << CLEAR << e.what() << std::endl;
 		}
 	}
+	std::cout << PINK << "RUN DMK 11..." << CLEAR << std::endl << std::endl;
 }
