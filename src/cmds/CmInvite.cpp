@@ -38,20 +38,13 @@ void Server::CmInvite(t_msg &msg, int fd)
 		return ;
 	}
 
-	//DMK DUDAS
-	if (!_channel[channel]->hasMode('i')) 
-	{
-		answerClient(fd, ERR_INVITEONLYCHAN, channel, "Error, you don't need to invite someone to the channel. Any one can join to the channel by himself.");
-		return ;
-	}	
-
 	if (!_channel[channel]->hasUser(_clients[fd]->getNickname())) 
 	{
 		answerClient(fd, ERR_NOTONCHANNEL, channel, "Error, you're not on the \"" + channel + "\" channel. So you can't invite any one to the channel");
 		return ;
 	}
 
-	if (!_channel[channel]->isAdmin(fd)) 
+	if (_channel[channel]->hasMode('i') && !_channel[channel]->isAdmin(fd)) 
 	{
 		answerClient(fd, ERR_INVITEONLYCHAN, channel, "Error, you need to be administrator of the \"" + channel + "\" channel to invite someone.");
 		return ;
