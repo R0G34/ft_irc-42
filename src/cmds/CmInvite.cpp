@@ -6,49 +6,88 @@
 #include <Server.hpp>
 
 // INVITE <nickname> <channel>
-void Server::CmInvite(t_msg &msg, int fd) {
-	if (msg.params.size() != 2) {
-		answerClient(fd, ERR_NEEDMOREPARAMS, "INVITE", "Not enough parameters");
+void Server::CmInvite(t_msg &msg, int fd) 
+{
+	if (msg.params.size() != 2 || (msg.params[0][0] == '#' || msg.params[0][0] == '&') || 
+								  (msg.params[1][0] != '#' && msg.params[1][0] != '&')) 
+	{
+		answerClient(fd, ERR_NEEDMOREPARAMS, "INVITE", "Error INVITE command format. (It must be like \"INVITE NICKNAME #channel\")");
 		return ;
 	}
 
+	std::string nickToInvite = msg.params[0];
+	std::string channel = msg.params[1];
 	int invited = -1;
-	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
-		if (it->second->getNickname() == msg.params[0]) {
+	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it) 
+	{
+		if (it->second->getNickname() == nickToInvite) 
+		{
 			invited = it->first;
 			break;
 		}
 	}
-	if (invited == -1) {
-		answerClient(fd, ERR_NOSUCHNICK, msg.params[0], "No such nick/channel");
+
+	if (invited == -1) 
+	{
+		answerClient(fd, ERR_NOSUCHNICK, nickToInvite, "Error, the nick \"" + nickToInvite + "\", doesn't exist on the server.");
 		return ;
 	}
-	if (_channel.find(msg.params[1]) == _channel.end()) {
-		answerClient(fd, ERR_NOTONCHANNEL, msg.params[1], "You're not on that channel");
+	if (_channel.find(channel) == _channel.end()) 
+	{
+		answerClient(fd, ERR_NOTONCHANNEL, channel, "Error, the channel \"" + channel + "\", doesn't exist on the server.");
 		return ;
 	}
-	if (!_channel[msg.params[1]]->hasUser(_clients[fd]->getNickname())) {
-		answerClient(fd, ERR_NOTONCHANNEL, msg.params[1], "You're not on that channel");
+
+	//DMK DUDAS
+	if (!_channel[channel]->hasMode('i')) 
+	{
+		answerClient(fd, ERR_INVITEONLYCHAN, channel, "Error, you don't need to invite someone to the channel. Any one can join to the channel by himself.");
+		return ;
+	}	
+
+	if (!_channel[channel]->hasUser(_clients[fd]->getNickname())) 
+	{
+		answerClient(fd, ERR_NOTONCHANNEL, channel, "Error, you're not on the \"" + channel + "\" channel. So you can't invite any one to the channel");
 		return ;
 	}
-	if (_channel[msg.params[1]]->hasUser(msg.params[0])) {
-		answerClient(fd, ERR_USERONCHANNEL, msg.params[0], "is already on channel");
+
+	if (!_channel[channel]->isAdmin(fd)) 
+	{
+		answerClient(fd, ERR_INVITEONLYCHAN, channel, "Error, you need to be administrator of the \"" + channel + "\" channel to invite someone.");
 		return ;
 	}
-	if (_channel[msg.params[1]]->hasMode('i') && !_channel[msg.params[1]]->isAdmin(fd)) {
-		answerClient(fd, ERR_INVITEONLYCHAN, msg.params[1], "Cannot invite to invite-only channel");
+
+	if (_channel[channel]->hasUser(nickToInvite)) 
+	{
+		answerClient(fd, ERR_USERONCHANNEL, nickToInvite, "\"" + nickToInvite + "\" is already on \"" + channel + "\" channel.");
 		return ;
 	}
-	if (_channel[msg.params[1]]->hasMode('l') && _channel[msg.params[1]]->getUserCount() >= _channel[msg.params[1]]->getMaxUsers()) {
-		answerClient(fd, ERR_CHANNELISFULL, msg.params[1], "Cannot invite to full channel");
+	// if (_channel[channel]->hasMode('i') && !_channel[channel]->isAdmin(fd)) {
+	// 	answerClient(fd, ERR_INVITEONLYCHAN, channel, "Cannot invite to invite-only channel");
+	// 	return ;
+	// }
+	if (_channel[channel]->hasMode('l') && _channel[channel]->getUserCount() >= _channel[channel]->getMaxUsers()) {
+		answerClient(fd, ERR_CHANNELISFULL, channel, "The channel \"" + channel + "\" is full. You must to increse de limit of users of the channel if you want to invite someone");
 		return ;
 	}
-	if (_channel[msg.params[1]]->hasMode('b') && _channel[msg.params[1]]->isBanned(invited)) {
-		answerClient(fd, ERR_BANNEDFROMCHAN, msg.params[1], "Cannot invite banned user");
+
+	if (_channel[channel]->hasMode('b') && _channel[channel]->isBanned(invited)) 
+	{
+		answerClient(fd, ERR_BANNEDFROMCHAN, channel, "Cannot invite banned user");
 		return ;
 	}
-	if (!_channel[msg.params[1]]->isInvited(invited))
-		_channel[msg.params[1]]->addInvitedList(_clients[invited]);
-	msgClientToClient(fd, invited, "INVITE", msg.params[1]);
-	answerClient(fd, RPL_INVITING, _clients[invited]->getNickname(), msg.params[1]);
+
+	//DMK 
+	Client* cli = _clients[invited];
+	if (!_channel[channel]->isInvited(invited))
+	{	
+		_channel[channel]->addInvitedList(_clients[invited]);
+		msgClientToClient(fd, invited, "INVITE", channel);
+		answerClient(fd, RPL_INVITING, _clients[invited]->getNickname(), channel);
+	}
+	else
+	{
+		answerClient(fd, RPL_INVITING, cli->getNickname(), "Warning, \"" + cli->getNickname() + "\" is  already invited.");
+	}
 }
+	
