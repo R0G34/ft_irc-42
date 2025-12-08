@@ -215,15 +215,24 @@ t_msg	Server::parseMsg(std::string fullMsg)
 void	Server::readMsg(int fd)
 {
 	/* NOTE: */
-	std::cout << "Event received from fd: " << fd << std::endl;
+	// if (_clients.find(fd) == _clients.end())
+    //     return;
 
+	std::cout << "Event received from fd: " << fd << std::endl;
+	
 	char	msg[MAX_BYTES_MSG];
 	std::memset(msg, 0, sizeof(msg));
 
 	int bytes_recived =  recv(fd, &msg, MAX_BYTES_MSG, 0);
 
-	if (bytes_recived < 0)
-		throw std::runtime_error("On recv()");
+	if (bytes_recived < 0) {
+		disconnectClient(fd);
+		return;
+	}
+		/*throw std::runtime_error("On recv()");*/
+
+	// if (_clients.find(fd) == _clients.end())
+	// 	return;
 
     std::string aux = _clients[fd]->getBufferMsgClient();
     aux.append(msg, bytes_recived);
@@ -242,6 +251,8 @@ void	Server::readMsg(int fd)
 
         t_msg parsedMsg = parseMsg(fullMsg);
 		handleCommand(parsedMsg, fd);
+		if (_clients.find(fd) == _clients.end())
+			return ;
     }
 }
 
