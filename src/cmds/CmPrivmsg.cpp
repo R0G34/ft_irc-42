@@ -1,17 +1,12 @@
-// ======================================================================
-// Archivo: CmPrivmsg.cpp
-// Propósito: Implementación del comando IRC PRIVMSG: valida parámetros y aplica su lógica sobre clientes y canales.
-// ======================================================================
-
 #include <Server.hpp>
 
-// Método de la clase void Server que realiza la operación principal asociada.
+
 void Server::CmPrivMsg(t_msg &msg, int fdClient)
 {
     if (msg.params.empty()) 
     {
         answerClient(fdClient, ERR_NORECIPIENT, "", "No recipient given");
-        //return;
+
     }
     else if (!msg.hasTrailing || msg.trailing.empty()) 
     {
@@ -45,12 +40,12 @@ void Server::CmPrivMsg(t_msg &msg, int fdClient)
                     if (ch->getUserFd(_clients[fdClient]->getNickname()) == -1)
                     {
                         answerClient(fdClient, ERR_NOTONCHANNEL, target, "Cannot send to channel");
-                        //continue ;
+
                     }
                     else if ( ch->isBanned(fdClient))
                     {
                         answerClient(fdClient, ERR_CANNOTSENDTOCHAN, target, "Cannot send to channel");
-                        //continue ;
+
                     }
                     else 
                         ch->broadcastMessage(fdClient, "PRIVMSG", "", msg.trailing);

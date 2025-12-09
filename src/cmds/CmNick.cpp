@@ -1,11 +1,6 @@
-// ======================================================================
-// Archivo: CmNick.cpp
-// Propósito: Implementación del comando IRC NICK: valida parámetros y aplica su lógica sobre clientes y canales.
-// ======================================================================
-
 #include <Server.hpp>
 
-// Envía datos o mensajes al cliente o al canal correspondiente.
+
 void	Server::sendMsgChangeNick(std::string newNick, int fdClient)
 {
 	sendMsgToClient(fdClient, "NICK", newNick, "");
@@ -19,12 +14,12 @@ void	Server::sendMsgChangeNick(std::string newNick, int fdClient)
 	}
 }
 
-// Método de la clase void Server que realiza la operación principal asociada.
+
 void Server::CmNick(t_msg& msg, int fdClient)
 {
 	if(_clients[fdClient]->getRegistrationState() != RS_PassValidated)
 	{
-		answerClient(fdClient, ERR_NONICKNAMEGIVEN, "", "Before register your Nick, you must validate password (PASS xxxx)"); //DMK DEFINIR CONSTANTE DE ERROR SI ES NECESARIO
+		answerClient(fdClient, ERR_NONICKNAMEGIVEN, "", "Before register your Nick, you must validate password (PASS xxxx)");
 		return;
 	}
 

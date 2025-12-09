@@ -1,22 +1,17 @@
-// ======================================================================
-// Archivo: Server.cpp
-// Propósito: Implementación de la clase Server: gestión del socket, epoll y bucle principal del servidor IRC.
-// ======================================================================
-
 #include <Server.hpp>
 
-// Devuelve el atributo correspondiente.
+
 const int &Server::getPort() const { return _port; }
 
-// Devuelve el atributo correspondiente.
+
 const std::string &Server::getPassword() const { return _password; }
 
-// Método de la clase Server( const int &port, const std que realiza la operación principal asociada.
+
 Server::Server( const int &port, const std::string &password )
 	: _port(port), _password(password), _running(true), _socketFd(-1), _epollFd(-1), _maxChannelUsers(15),
 	   _serverName ("ircserver.com"), _version("ChatServ-1.0"), _chanModes("itoblk") {}
 
-// Destructor de la clase Server.
+
 Server::~Server() {
 	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
 		if (it->second) {
@@ -44,7 +39,7 @@ Server::~Server() {
 	std::cout << "Server closed" << std::endl;
 }
 
-// Inicializa el estado interno o los recursos necesarios.
+
 void Server::init() 
 {
 	_socketFd = socket(AF_INET, SOCK_STREAM, 0);
@@ -105,7 +100,7 @@ void Server::init()
 	std::cout << "Type 'exit' or 'quit' to stop the server." << std::endl;
 }
 
-// Método de la clase void	Server que realiza la operación principal asociada.
+
 void	Server::connectNewClient()
 {
 	sockaddr_in client_addr;
@@ -133,7 +128,7 @@ void	Server::connectNewClient()
 	<< ntohs(client_addr.sin_port) << std::endl;
 }
 
-// Interpreta y descompone los datos de entrada.
+
 t_msg	Server::parseMsg(std::string fullMsg)
 {
 	/* NOTE: */
@@ -211,12 +206,12 @@ t_msg	Server::parseMsg(std::string fullMsg)
 }
 
 
-// Método de la clase void	Server que realiza la operación principal asociada.
+
 void	Server::readMsg(int fd)
 {
 	/* NOTE: */
-	// if (_clients.find(fd) == _clients.end())
-    //     return;
+
+
 
 	std::cout << "Event received from fd: " << fd << std::endl;
 	
@@ -231,8 +226,8 @@ void	Server::readMsg(int fd)
 	}
 		/*throw std::runtime_error("On recv()");*/
 
-	// if (_clients.find(fd) == _clients.end())
-	// 	return;
+
+
 
     std::string aux = _clients[fd]->getBufferMsgClient();
     aux.append(msg, bytes_recived);
@@ -256,7 +251,7 @@ void	Server::readMsg(int fd)
     }
 }
 
-// Método de la clase void Server que realiza la operación principal asociada.
+
 void Server::disconnectClient(int fd) 
 {
 	/*
@@ -298,27 +293,27 @@ void Server::disconnectClient(int fd)
 			std::cout << "disconnectClient 8 DMK" << std::endl;
 			delete _channel[it->first];
 			std::cout << "disconnectClient 9 DMK" << std::endl;
-//DMK 
+
 			_channel.erase(it->first);
 			std::cout << "disconnectClient 10 DMK" << std::endl;
 		}
 	}*/
 	/* NOTE: */
-	//std::cout << GREEN << "Client disconnected successfully." << CLEAR << std::endl;
 
 
-    // Buscar el cliente primero
+
+
     std::map<int, Client*>::iterator itClient = _clients.find(fd);
     if (itClient == _clients.end())
         throw std::runtime_error("Trying to disconnect a client that does not exist");
     Client *client = itClient->second;
     
-	// 1) Sacar al cliente de todos los canales (sin borrar canales aún)
+
     for (std::map<std::string, Channel *>::iterator it = _channel.begin(); it != _channel.end(); ++it)
     {
         Channel *ch = it->second;
         ch->disconnectUser(client);
-        // Si quieres gestionar el Bot:
+
         if (ch->getUserCount() == 1 && ch->hasUser("Bot")) 
 		{
             int botFd = ch->getUserFd("Bot");
@@ -328,18 +323,18 @@ void Server::disconnectClient(int fd)
         }
     }
 
-    // 2) Quitar fd de epoll y cerrar socket
+
     if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
         throw std::runtime_error("When removing client from epoll instance");
 		
     if (close(fd) < 0)
         throw std::runtime_error("When closing client socket");
     
-	// 3) Borrar el Client y sacarlo del map
+
     delete client;
     _clients.erase(itClient);
     
-	// 4) Borrar canales vacíos con patrón seguro
+
     for (std::map<std::string, Channel *>::iterator it = _channel.begin(); it != _channel.end(); )
     {
         Channel *ch = it->second;
@@ -358,7 +353,7 @@ void Server::disconnectClient(int fd)
 	
 }
 
-// Método de la clase void  Server que realiza la operación principal asociada.
+
 void  Server::manageServerInput() 
 {
 	std::string input;
@@ -373,7 +368,7 @@ void  Server::manageServerInput()
 		std::cout << PINK << "Server is shutting down..." << CLEAR << std::endl;
 	}
 	else if (commands[0] == "clients") {
-		// TODO: Darle una vuelta a la información facilitada
+
 		std::cout << "Connected clients: " << std::endl;
 		for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
 			std::cout << "[ Client fd: " << it->first
@@ -383,7 +378,7 @@ void  Server::manageServerInput()
 		}
 	}
 	else if (commands[0] == "channels") {
-		// TODO: Darle una vuelta a la información facilitada
+
 		std::cout << "Available channels: " << std::endl;
 		for (std::map<std::string, Channel *>::iterator it = _channel.begin(); it != _channel.end(); ++it) {
 			std::cout << "[ Channel name: " << it->first 
@@ -420,7 +415,7 @@ void  Server::manageServerInput()
 		std::cout << RED << "Command not recognized. Type 'help' for a list of commands." << CLEAR << std::endl;
 }
 
-// Ejecuta el bucle principal o pone en marcha el componente.
+
 void Server::run() 
 {
 	epoll_event events[MAX_EVENTS];
@@ -437,7 +432,7 @@ void Server::run()
 			{
 				std::cout << "Closing server by signal..." << std::endl;
 				_running = false;
-				return; //continue;
+				return;
 			}
 			std::cout << PINK << "RUN DMK 3..." << CLEAR << std::endl << std::endl;
 			throw std::runtime_error("When waiting for events");

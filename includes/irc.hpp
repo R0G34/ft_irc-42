@@ -3,10 +3,10 @@
 #ifndef IRC_HPP
 # define IRC_HPP
 
-// ======================================================================
-// Archivo: irc.hpp
-// Propósito: Cabecera general del proyecto: incluye librerías estándar, constantes, estructuras auxiliares y códigos de respuesta IRC.
-// ======================================================================
+
+
+
+
 
 # include <iostream>
 # include <iomanip>
@@ -30,7 +30,7 @@
 # include <utility>
 # include <sstream>
 
-// COLORS
+
 # define RED     "\033[91;1m"
 # define GREEN   "\033[92;1m"
 # define YELLOW  "\033[93;1m"
@@ -128,7 +128,7 @@
 # define 	ERR_UNKNOWNCOMMAND		421
 
 /* UTILS */
-// Actualiza el atributo correspondiente.
+
 bool	setNonBlocking(int fd);
 
 #endif 

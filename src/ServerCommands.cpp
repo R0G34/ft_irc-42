@@ -1,14 +1,9 @@
-// ======================================================================
-// Archivo: ServerCommands.cpp
-// Propósito: Registro y ejecución de los distintos comandos IRC soportados por el servidor.
-// ======================================================================
-
 #include <Server.hpp>
 #include <iostream>
 #include <sstream>
 #include <string>
 
-// Inicializa el estado interno o los recursos necesarios.
+
 void	Server::initCmds()
 {
 	_fCommands.insert(std::pair<std::string, FCmd>("PASS", &Server::CmPass));
@@ -29,7 +24,7 @@ void	Server::initCmds()
 	_fCommands.insert(std::pair<std::string, FCmd>("NOTICE", &Server::CmNotice));
 }
 
-// Crea o inicializa los recursos necesarios.
+
 std::string Server::makePrefix(int fd) 
 {
   return ":" + _clients[fd]->getNickname()
@@ -37,7 +32,7 @@ std::string Server::makePrefix(int fd)
        + _clients[fd]->GetIp();
 }
 
-// Método de la clase void Server que realiza la operación principal asociada.
+
 void Server::answerClient(int fdClient, int code, const std::string &target, const std::string &msg)
 {
 	std::ostringstream ss;
@@ -60,7 +55,7 @@ void Server::answerClient(int fdClient, int code, const std::string &target, con
 
 
 
-// Envía datos o mensajes al cliente o al canal correspondiente.
+
 void Server::sendMsgToClient(int fd, const std::string &cmd, const std::string &channel, const std::string &msg) 
 {
 	std::string prefix = makePrefix(fd);
@@ -73,7 +68,7 @@ void Server::sendMsgToClient(int fd, const std::string &cmd, const std::string &
 		throw std::runtime_error("Sending msg to client");
 }
 
-// Método de la clase void Server que realiza la operación principal asociada.
+
 void Server::msgClientToClient(int from, int to, const std::string &cmd, const std::string &msg) 
 {
 	std::string prefix = makePrefix(from);
@@ -86,7 +81,7 @@ void Server::msgClientToClient(int from, int to, const std::string &cmd, const s
 		throw std::runtime_error("Sending msg to client");
 }
 
-// Envía datos o mensajes al cliente o al canal correspondiente.
+
 void	Server::sendWelcomeMsg(int fdClient)
 {
 	Client& c = *_clients[fdClient];
@@ -100,7 +95,7 @@ void	Server::sendWelcomeMsg(int fdClient)
     answerClient(fdClient, RPL_MYINFO, "", _serverName + " " + _version + " " + _chanModes);
 }
 
-// Método de la clase void	Server que realiza la operación principal asociada.
+
 void	Server::joinGeneralChannel(int fdClient)
 {
 	if (_channel.find("#general") == _channel.end()) 
@@ -114,7 +109,7 @@ void	Server::joinGeneralChannel(int fdClient)
     CmJoin(join, fdClient);
 }
 
-// Gestiona la lógica asociada a un evento o comando.
+
 void Server::handleCommand(t_msg& msg, int fdClient)
 {
 	if (_clients[fdClient]->getRegistrationState() != RS_Registered)
@@ -144,25 +139,25 @@ void Server::handleCommand(t_msg& msg, int fdClient)
 			answerClient(fdClient, ERR_UNKNOWNCOMMAND, "", "Unknown command (" + msg.command + "). Remember that command must be UPPERCASE.");
 			
 		
-		//DMK ORIGINAL
-		// if (_clients[fdClient]->getRegistrationState() == RS_NoPass && msg.command == "PASS")
-		// 	CmPass(msg, fdClient);
-		// else if (_clients[fdClient]->getRegistrationState() == RS_PassValidated && msg.command == "PASS")
-		// {
-		// 	_clients[fdClient]->setRegistrationState(RS_NoPass);
-		// 	CmPass(msg, fdClient);
-		// }
-		// else if (_clients[fdClient]->getRegistrationState() == RS_PassValidated && msg.command == "NICK")
-		// 	CmNick(msg, fdClient);
-		// else if (_clients[fdClient]->getRegistrationState() == RS_NickValidated  && msg.command == "USER")
-		// 	CmUser(msg, fdClient);
 
-		// if (_clients[fdClient]->getRegistrationState() == RS_Registered)
-		// {
-		// 	sendWelcomeMsg(fdClient);
-		// 	joinGeneralChannel(fdClient);
-		// }
-		//return ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	}
 	else
 	{

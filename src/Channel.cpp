@@ -1,33 +1,28 @@
-// ======================================================================
-// Archivo: Channel.cpp
-// Propósito: Implementación de la clase Channel: gestión de usuarios, modos y mensajes de un canal IRC.
-// ======================================================================
-
 #include <Channel.hpp>
 
-// Destructor de la clase Channel.
+
 Channel::~Channel() {}
 
-// Método de la clase Channel(const std que realiza la operación principal asociada.
+
 Channel::Channel(const std::string &name) : _maxUsers(0), _name(name), _ownerFd(-1) {}
 
-// GETTERS
+
 
 const std::string &Channel::getName() const { return _name; }
 
-// Devuelve el atributo correspondiente.
+
 const std::string &Channel::getPass() const { return _pass; }
 
-// Devuelve el atributo correspondiente.
+
 const size_t &Channel::getMaxUsers() const { return _maxUsers; }
 
-// Devuelve el atributo correspondiente.
+
 const std::string &Channel::getTopic() const { return _topic; }
 
-// Devuelve el atributo correspondiente.
+
 size_t Channel::getUserCount() const { return _users.size(); }
 
-// Devuelve el atributo correspondiente.
+
 int Channel::getUserFd(const std::string &nick) const {
 	for (std::map<int, Client *>::const_iterator it = _users.begin(); it != _users.end(); ++it) {
 		if (it->second->getNickname() == nick)
@@ -36,7 +31,7 @@ int Channel::getUserFd(const std::string &nick) const {
 	return -1;
 }
 
-// Devuelve el atributo correspondiente.
+
 std::string Channel::getMode() const 
 {
 	
@@ -52,42 +47,42 @@ std::string Channel::getMode() const
 	return modes;
 }
 
-// SETTERS
+
 
 void Channel::setName(const std::string &name) { _name = name; }
 
-// Actualiza el atributo correspondiente.
+
 void Channel::setPass(const std::string &pass) { _pass = pass; }
 
-// Actualiza el atributo correspondiente.
+
 void Channel::setMaxUsers(const size_t &maxUsers) { _maxUsers = maxUsers; }
 
-// Actualiza el atributo correspondiente.
+
 void Channel::setMode(const char &mode) { _mode.insert(mode); }
 
-// Método de la clase void Channel que realiza la operación principal asociada.
+
 void Channel::unsetMode(const char &mode) { _mode.erase(mode); }
 
-// Actualiza el atributo correspondiente.
+
 void Channel::setTopic(const std::string &topic) { _topic = topic; }
 
-// CHECKS
+
 
 bool Channel::isBanned(int fd) const { return _banned.find(fd) != _banned.end(); }
 
-// Comprueba o valida una condición concreta.
+
 bool Channel::isInvited(int fd) const { return _invited.find(fd) != _invited.end(); }
 
-// Comprueba o valida una condición concreta.
+
 bool Channel::isAdmin(int fd) const { return _admins.find(fd) != _admins.end(); }
 
-// Método de la clase bool Channel que realiza la operación principal asociada.
+
 bool Channel::hasMode(const char &mode) const { return _mode.find(mode) != _mode.end(); }
 
-// Método de la clase bool Channel que realiza la operación principal asociada.
+
 bool Channel::hasUser(int fd) const { return _users.find(fd) != _users.end(); }
 
-// Método de la clase bool Channel que realiza la operación principal asociada.
+
 bool Channel::hasUser(const std::string &nick) const {
 	for (std::map<int, Client *>::const_iterator it = _users.begin(); it != _users.end(); ++it) {
 		if (it->second->getNickname() == nick)
@@ -96,7 +91,7 @@ bool Channel::hasUser(const std::string &nick) const {
 	return false;
 }
 
-// METHODS
+
 
 void Channel::newChannelUser(Client *client) {
 	if (_users.size() >= _maxUsers && _maxUsers > 0)
@@ -115,7 +110,7 @@ void Channel::newChannelUser(Client *client) {
 	client->joinChannel(this);
 }
 
-// Método de la clase void Channel que realiza la operación principal asociada.
+
 void Channel::disconnectUser(Client *client) {
 	if (_users.find(client->getFd()) == _users.end())
 		return ;
@@ -157,35 +152,35 @@ void Channel::disconnectUser(Client *client) {
 	_users.erase(client->getFd());
 }
 
-// Añade elementos o información a las estructuras internas.
+
 void Channel::addInvitedList(Client *client) {
 	if (_invited.find(client->getFd()) != _invited.end())
 		throw std::runtime_error("User already invited to this channel.");
 	_invited.insert(std::make_pair(client->getFd(), client));
 }
 
-// Elimina elementos o información de las estructuras internas.
+
 void Channel::removeInvitedList(Client *client) {
 	if (_invited.find(client->getFd()) == _invited.end())
 		throw std::runtime_error("User not invited to this channel.");
 	_invited.erase(client->getFd());
 }
 
-// Añade elementos o información a las estructuras internas.
+
 void Channel::addBannedList(Client *client) {
 	if (_banned.find(client->getFd()) != _banned.end())
 		throw std::runtime_error("User already banned from this channel.");
 	_banned.insert(std::make_pair(client->getFd(), client));
 }
 
-// Elimina elementos o información de las estructuras internas.
+
 void Channel::removeBannedList(Client *client) {
 	if (_banned.find(client->getFd()) == _banned.end())
 		throw std::runtime_error("User unbanned from this channel.");
 	_banned.erase(client->getFd());
 }
 
-// Añade elementos o información a las estructuras internas.
+
 void Channel::addAdminList(Client *client) 
 {
 	if (_admins.find(client->getFd()) != _admins.end())
@@ -193,7 +188,7 @@ void Channel::addAdminList(Client *client)
 	_admins.insert(std::make_pair(client->getFd(), client));
 }
 
-// Elimina elementos o información de las estructuras internas.
+
 void Channel::removeAdminList(Client *client) {
 	if (_admins.find(client->getFd()) == _admins.end())
 		throw std::runtime_error("User is not admin of this channel.");
@@ -201,7 +196,7 @@ void Channel::removeAdminList(Client *client) {
 	_invited.erase(client->getFd());
 }
 
-// Envía un mensaje a todos los clientes afectados.
+
 void Channel::broadcastMessageNochan(int fd, const std::string &cmd, const std::string &msg) const {
 	std::string prefix = ":" + _users.at(fd)->getNickname() + "!" + _users.at(fd)->getUsername() + "@" + _users.at(fd)->GetIp();
 	std::string message = prefix + " " + cmd;
@@ -216,7 +211,7 @@ void Channel::broadcastMessageNochan(int fd, const std::string &cmd, const std::
 	}
 }
 
-// Envía un mensaje a todos los clientes afectados.
+
 void Channel::broadcastMessage(int fd, const std::string &cmd, const std::string &user, const std::string &msg) const {
 	std::string prefix = ":" + _users.at(fd)->getNickname() + "!" + _users.at(fd)->getUsername() + "@" + _users.at(fd)->GetIp();
 	std::string message = prefix + " " + cmd + " " + _name;
@@ -233,7 +228,7 @@ void Channel::broadcastMessage(int fd, const std::string &cmd, const std::string
 	}
 }
 
-// Devuelve una representación en texto de los elementos correspondientes.
+
 std::string Channel::listUsers() {
 	std::string list;
 	if (_users.empty())
@@ -248,7 +243,7 @@ std::string Channel::listUsers() {
 	return list;
 }
 
-// Devuelve una representación en texto de los elementos correspondientes.
+
 std::string Channel::listBanned() {
 	std::string list;
 	if (_banned.empty())

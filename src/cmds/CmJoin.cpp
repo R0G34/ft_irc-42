@@ -1,11 +1,6 @@
-// ======================================================================
-// Archivo: CmJoin.cpp
-// Propósito: Implementación del comando IRC JOIN: valida parámetros y aplica su lógica sobre clientes y canales.
-// ======================================================================
-
 #include <Server.hpp>
 
-// JOIN <channel>{,<channel>} [<key>{,<key>}]
+
 void Server::CmJoin(t_msg &msg, int fd) 
 {
 	if (msg.params.size() < 1) 
@@ -21,24 +16,24 @@ void Server::CmJoin(t_msg &msg, int fd)
 	std::vector<std::string> channels;
 	std::vector<std::string> passwords;
 
-// if(passwords.size() == 0)
-// 	std::cout << "No falla sin inicializar el vector del password" << std::endl;
+
+
 
 	splitCmd(msg.params[0], channels, ',');
 
-// std::cout << "Probando la salida del split." << std::endl;
-// size_t ind = -1;
-// while (++ind < channels.size())
-// {
-// 	std::cout << "Channel " << ind << ": " << channels[ind] << std::endl;
-// }
+
+
+
+
+
+
 
 	if (msg.params.size() == 2)
 		splitCmd(msg.params[1], passwords, ',');
 
 	for (size_t i = 0; i < channels.size(); ++i) 
 	{
-// std::cout << "************** " + channels[i] + " ***************" << std::endl;
+
 		std::string errMsg = "Error joinning channel named (" + channels[i] + "): ";
 		if ((channels[i][0] != '#' && channels[i][0] != '&') && channels[i] != "0") 
 		{
@@ -124,13 +119,13 @@ void Server::CmJoin(t_msg &msg, int fd)
 					answerClient(fd, ERR_INVITEONLYCHAN, channels[i], errMsg);
 					continue ;
 				}
-				else //DUDA NO SE EL MOTIVO POR EL QUE QUITA DE LA LISTA
+				else
 					_channel[channels[i]]->removeInvitedList(_clients[fd]);
 			}
 
 			if (_channel[channels[i]]->hasMode('l') && _channel[channels[i]]->getUserCount() >= _channel[channels[i]]->getMaxUsers()) 
 			{
-				errMsg += "Channel is full (+l)";//. Maximum users permited: " + _channel[channels[i]]->getMaxUsers().to_string();
+				errMsg += "Channel is full (+l)";
 				answerClient(fd, ERR_CHANNELISFULL, channels[i], errMsg);
 				continue ;
 			}

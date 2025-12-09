@@ -1,15 +1,9 @@
-
-// ======================================================================
-// Archivo: utils.cpp
-// Propósito: Funciones auxiliares y utilidades generales (sockets no bloqueantes, fechas, etc.).
-// ======================================================================
-
 #include <irc.hpp>
 #include <fcntl.h> 
 #include <ctime>
 #include <string>
 
-// Actualiza el atributo correspondiente.
+
 bool	setNonBlocking(int fd)
 {
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
@@ -17,7 +11,7 @@ bool	setNonBlocking(int fd)
 	return true;
 }
 
-// Comprueba o valida una condición concreta.
+
 bool isSpecial(char c)
 {
     return (c == '[' || c == ']' || c == '\\' || c == '`' ||
@@ -25,7 +19,7 @@ bool isSpecial(char c)
 }
 
 
-// Método de la clase std que realiza la operación principal asociada.
+
 std::string currentDateTimeString() {
     std::time_t t = time(NULL);
     std::tm* tm_info = localtime(&t);

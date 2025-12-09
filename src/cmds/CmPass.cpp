@@ -1,11 +1,6 @@
-// ======================================================================
-// Archivo: CmPass.cpp
-// Propósito: Implementación del comando IRC PASS: valida parámetros y aplica su lógica sobre clientes y canales.
-// ======================================================================
-
 #include <Server.hpp>
 
-// Método de la clase void	Server que realiza la operación principal asociada.
+
 void	Server::CmPass(t_msg& msg, int fdClient)
 {
 	if (_clients[fdClient]->getRegistrationState() == RS_Registered)

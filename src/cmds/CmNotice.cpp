@@ -1,12 +1,7 @@
-// ======================================================================
-// Archivo: CmNotice.cpp
-// Propósito: Implementación del comando IRC NOTICE: valida parámetros y aplica su lógica sobre clientes y canales.
-// ======================================================================
-
 # include <Server.hpp>
 
-// Método de la clase void Server que realiza la operación principal asociada.
-// Funciona como PRIVMSG pero sin mandan ningún mensaje automático
+
+
 void Server::CmNotice(t_msg &msg, int fd) 
 {
 	if (msg.params.empty() || !msg.hasTrailing || msg.trailing.empty())

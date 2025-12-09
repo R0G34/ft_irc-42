@@ -1,11 +1,6 @@
-// ======================================================================
-// Archivo: CmKick.cpp
-// Propósito: Implementación del comando IRC KICK: valida parámetros y aplica su lógica sobre clientes y canales.
-// ======================================================================
-
 #include <Server.hpp>
 
-// KICK <channel> <user> *( "," <user> ) [<comment>]
+
 void Server::CmKick(t_msg &msg, int fd) 
 {
 	if (msg.params.size() != 2 || (msg.params[0][0] != '#' && msg.params[0][0] != '&') || 

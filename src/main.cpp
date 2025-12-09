@@ -1,18 +1,13 @@
-// ======================================================================
-// Archivo: main.cpp
-// Propósito: Punto de entrada del programa. Valida los argumentos y arranca el servidor IRC.
-// ======================================================================
-
 #include <irc.hpp>
 #include <Server.hpp>
 
-// Gestiona la lógica asociada a un evento o comando.
+
 void	handleSignal(int signal) {
 	(void)signal;
 		std::cout << "\nManage Signal..." << std::endl;
 }
 
-// Función auxiliar que realiza la operación principal asociada.
+
 void	runSignals() 
 {
 	signal(SIGINT, handleSignal);
@@ -22,7 +17,7 @@ void	runSignals()
 	signal(SIGPIPE, SIG_IGN);
 }
 
-// Interpreta y descompone los datos de entrada.
+
 int	parseArgs(const std::string &port, const std::string &password) 
 {
 	for (size_t i = 0; i < port.size(); ++i) {
@@ -42,7 +37,7 @@ int	parseArgs(const std::string &port, const std::string &password)
 	return check;
 }
 
-// Función auxiliar que realiza la operación principal asociada.
+
 int main(int ac, char** av) {
 	
 	if (ac != 3) {

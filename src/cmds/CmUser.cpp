@@ -1,20 +1,15 @@
-// ======================================================================
-// Archivo: CmUser.cpp
-// Propósito: Implementación del comando IRC USER: valida parámetros y aplica su lógica sobre clientes y canales.
-// ======================================================================
-
 #include <Server.hpp>
 
-// Método de la clase void	Server que realiza la operación principal asociada.
+
 void	Server::CmUser(t_msg& msg, int fdClient)
 {
 	if(_clients[fdClient]->getRegistrationState() != RS_NickValidated && 
 	   _clients[fdClient]->getRegistrationState() != RS_Registered)
 	{
 		if(_clients[fdClient]->getRegistrationState() == RS_PassValidated)
-			answerClient(fdClient, ERR_ALREADYREGISTERED, "", "After validate your password, you must register your NICK (NICK xxxx)."); //DMK CONSTANTE DE ERR??
+			answerClient(fdClient, ERR_ALREADYREGISTERED, "", "After validate your password, you must register your NICK (NICK xxxx).");
 		else
-			answerClient(fdClient, ERR_ALREADYREGISTERED, "", "First, you must validate password (PASS xxxx). Then register your nick (NICK zzzz)."); //DMK CONSTANTE DE ERR??
+			answerClient(fdClient, ERR_ALREADYREGISTERED, "", "First, you must validate password (PASS xxxx). Then register your nick (NICK zzzz).");
 		return ;
 	}
 
@@ -26,19 +21,19 @@ void	Server::CmUser(t_msg& msg, int fdClient)
 
 	if (msg.params.size() < 3 || msg.hasTrailing == false) 
 	{
-    	answerClient(fdClient, ERR_NEEDMOREPARAMS, "USER", "Not enough parameters"); //ok 
+    	answerClient(fdClient, ERR_NEEDMOREPARAMS, "USER", "Not enough parameters");
     	return;
 	}
 
 	if (msg.params[0].length() <= 0)
 	{
-		answerClient(fdClient, ERR_NEEDMOREPARAMS, "USER", "Not enough parameters"); //ok 
+		answerClient(fdClient, ERR_NEEDMOREPARAMS, "USER", "Not enough parameters");
     	return;
 	}
 
-	// TODO COMENTARIO NECESARIO NO BORRAR poner en ingles
-	// RFC 2812 establece que params[1] y params[2] “SHOULD” ser “0” y “*”
-	// pero no es obligatorio, así que los ignoramos intencionadamente.
+
+
+
 
 	if ( msg.params[0].length() > USERLEN)
 		_clients[fdClient]->setUsername( msg.params[0].substr(0, USERLEN));
@@ -52,7 +47,7 @@ void	Server::CmUser(t_msg& msg, int fdClient)
 			continue ;
 		else if (it->second->getUsername() == _clients[fdClient]->getUsername())
 		{
-			answerClient(fdClient, ERR_NICKNAMEINUSE, "", "User is already in use"); // TODO:  que error mandar aqui?
+			answerClient(fdClient, ERR_NICKNAMEINUSE, "", "User is already in use");
 			return ;
 		}
 	}

@@ -1,11 +1,6 @@
-// ======================================================================
-// Archivo: CmInvite.cpp
-// Propósito: Implementación del comando IRC INVITE: valida parámetros y aplica su lógica sobre clientes y canales.
-// ======================================================================
-
 #include <Server.hpp>
 
-// INVITE <nickname> <channel>
+
 void Server::CmInvite(t_msg &msg, int fd) 
 {
 	if (msg.params.size() != 2 || (msg.params[0][0] == '#' || msg.params[0][0] == '&') || 
@@ -55,10 +50,10 @@ void Server::CmInvite(t_msg &msg, int fd)
 		answerClient(fd, ERR_USERONCHANNEL, nickToInvite, "\"" + nickToInvite + "\" is already on \"" + channel + "\" channel.");
 		return ;
 	}
-	// if (_channel[channel]->hasMode('i') && !_channel[channel]->isAdmin(fd)) {
-	// 	answerClient(fd, ERR_INVITEONLYCHAN, channel, "Cannot invite to invite-only channel");
-	// 	return ;
-	// }
+
+
+
+
 	if (_channel[channel]->hasMode('l') && _channel[channel]->getUserCount() >= _channel[channel]->getMaxUsers()) {
 		answerClient(fd, ERR_CHANNELISFULL, channel, "The channel \"" + channel + "\" is full. You must to increse de limit of users of the channel if you want to invite someone");
 		return ;
@@ -70,7 +65,7 @@ void Server::CmInvite(t_msg &msg, int fd)
 		return ;
 	}
 
-	//DMK 
+
 	Client* cli = _clients[invited];
 	if (!_channel[channel]->isInvited(invited))
 	{	

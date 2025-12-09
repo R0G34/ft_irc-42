@@ -1,12 +1,7 @@
-// ======================================================================
-// Archivo: CmTopic.cpp
-// Propósito: Implementación del comando IRC TOPIC: valida parámetros y aplica su lógica sobre clientes y canales.
-// ======================================================================
-
 #include <Server.hpp>
 
 
-// TOPIC <channel> [<topic>]
+
 void Server::CmTopic(t_msg &msg, int fd) {
 	if (msg.params.size() < 1 || msg.params.size() > 2) {
 		answerClient(fd, ERR_NEEDMOREPARAMS, "TOPIC", "Not enough parameters");

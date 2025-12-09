@@ -1,11 +1,6 @@
-// ======================================================================
-// Archivo: CmPart.cpp
-// Propósito: Implementación del comando IRC PART: valida parámetros y aplica su lógica sobre clientes y canales.
-// ======================================================================
-
 #include <Server.hpp>
 
-// PART <channel>{,<channel>} [<reason>]
+
 void Server::CmPart(t_msg &msg, int fd) {
 	if (msg.params.size() < 1 || msg.params.size() > 2) {
 		answerClient(fd, ERR_NEEDMOREPARAMS, "PART", "Not enough parameters");

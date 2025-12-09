@@ -1,11 +1,6 @@
-// ======================================================================
-// Archivo: CmQuit.cpp
-// Propósito: Implementación del comando IRC QUIT: valida parámetros y aplica su lógica sobre clientes y canales.
-// ======================================================================
-
 #include <Server.hpp>
 
-// Método de la clase void Server que realiza la operación principal asociada.
+
 void Server::CmQuit(t_msg& msg, int fdClient)
 {
     std::string reason;

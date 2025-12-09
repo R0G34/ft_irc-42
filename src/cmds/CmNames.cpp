@@ -1,11 +1,6 @@
-// ======================================================================
-// Archivo: CmNames.cpp
-// Propósito: Implementación del comando IRC NAMES: valida parámetros y aplica su lógica sobre clientes y canales.
-// ======================================================================
-
 #include <Server.hpp>
 
-// NAMES <channel>{,<channel>}
+
 void Server::CmNames(t_msg &msg, int fd) {
 	if (msg.params.size() > 1) {
 		answerClient(fd, ERR_NEEDMOREPARAMS, "NAMES", "Not enough parameters");
