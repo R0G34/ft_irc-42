@@ -9,7 +9,7 @@ const std::string &Server::getPassword() const { return _password; }
 
 Server::Server( const int &port, const std::string &password )
 	: _port(port), _password(password), _running(true), _socketFd(-1), _epollFd(-1), _maxChannelUsers(15),
-	   _serverName ("ircserver.com"), _version("ChatServ-1.0"), _chanModes("itoblk") {}
+	_serverName ("ircserver.com"), _version("ChatServ-1.0"), _chanModes("itoblk") {}
 
 
 Server::~Server() {
@@ -86,7 +86,6 @@ void Server::init()
 	initCmds();
 	_creationDate = currentDateTimeString();
 
-	/* NOTE:  11. Print server info */
 	std::cout << "Server initialized with the following parameters:" << std::endl;
 	std::cout << "Port: " << _port << std::endl;
 	std::cout << "Password: " << _password << std::endl;
@@ -121,7 +120,6 @@ void	Server::connectNewClient()
 		throw std::runtime_error("When add new client to epoll");
 	_clients.insert(std::pair<int, Client*>(client_fd, auxClient));
 
-	/* NOTE: Client Data */
 	std::cout << "Client fd connected with fd: " << client_fd << std::endl;
 	std::cout << " Client connected from: "
 	<< inet_ntoa(client_addr.sin_addr) << ":" 
@@ -131,7 +129,6 @@ void	Server::connectNewClient()
 
 t_msg	Server::parseMsg(std::string fullMsg)
 {
-	/* NOTE: */
 	std::cout << "FULL MSG RECIVED:\n" << BLUE << fullMsg << CLEAR << std::endl;
 
 	while (!fullMsg.empty() && (fullMsg[fullMsg.size() - 1] == '\r' || fullMsg[fullMsg.size() - 1] == '\n'))
@@ -209,9 +206,6 @@ t_msg	Server::parseMsg(std::string fullMsg)
 
 void	Server::readMsg(int fd)
 {
-	/* NOTE: */
-
-
 
 	std::cout << "Event received from fd: " << fd << std::endl;
 	
@@ -224,10 +218,6 @@ void	Server::readMsg(int fd)
 		disconnectClient(fd);
 		return;
 	}
-		/*throw std::runtime_error("On recv()");*/
-
-
-
 
     std::string aux = _clients[fd]->getBufferMsgClient();
     aux.append(msg, bytes_recived);
@@ -254,55 +244,6 @@ void	Server::readMsg(int fd)
 
 void Server::disconnectClient(int fd) 
 {
-	/*
-	if (_clients.find(fd) == _clients.end()) 
-		throw std::runtime_error("Trying to disconnect a client that does not exist");
-
-	std::cout << "disconnectClient 1 DMK" << std::endl;
-	
-	Client *client = _clients[fd];
-	for (std::map<std::string, Channel *>::iterator it = _channel.begin(); it != _channel.end(); ++it) 
-	{
-		_channel[it->first]->disconnectUser(client);
-		if (_channel[it->first]->getUserCount() == 1 && _channel[it->first]->hasUser("Bot"))
-			_channel[it->first]->disconnectUser(_clients[_channel[it->first]->getUserFd("Bot")]);
-	}
-
-	std::cout << "disconnectClient 2 DMK" << std::endl;
-	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
-		throw std::runtime_error("When removing client from epoll instance");
-
-	std::cout << "disconnectClient 3 DMK" << std::endl;	
-	if (close(fd) < 0) 
-		throw std::runtime_error("When closing client socket");
-
-	std::cout << "disconnectClient 4 DMK" << std::endl;
-	delete client;
-	
-	std::cout << "disconnectClient 5 DMK" << std::endl;
-	_clients.erase(fd);
-	std::cout << "disconnectClient 6 DMK" << std::endl;
-
-	std::map<std::string, Channel *>::iterator it_begin = _channel.begin();
-	std::map<std::string, Channel *>::iterator it_end = _channel.end();
-	for (std::map<std::string, Channel *>::iterator it = it_begin; it != it_end; it++) 
-	{
-		std::cout << "disconnectClient 7 DMK: channel: " << _channel[it->first]->getName() << ", Número usuarios: " << _channel[it->first]->getUserCount() << std::endl;
-		if (NULL != _channel[it->first] && _channel[it->first]->getUserCount() == 0) 
-		{
-			std::cout << "disconnectClient 8 DMK" << std::endl;
-			delete _channel[it->first];
-			std::cout << "disconnectClient 9 DMK" << std::endl;
-
-			_channel.erase(it->first);
-			std::cout << "disconnectClient 10 DMK" << std::endl;
-		}
-	}*/
-	/* NOTE: */
-
-
-
-
     std::map<int, Client*>::iterator itClient = _clients.find(fd);
     if (itClient == _clients.end())
         throw std::runtime_error("Trying to disconnect a client that does not exist");
@@ -372,9 +313,9 @@ void  Server::manageServerInput()
 		std::cout << "Connected clients: " << std::endl;
 		for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
 			std::cout << "[ Client fd: " << it->first
-					  << ", Username: " << it->second->getUsername() 
-					  << ", Nickname: " << it->second->getNickname()
-					  << " ]" << std::endl;
+					<< ", Username: " << it->second->getUsername() 
+					<< ", Nickname: " << it->second->getNickname()
+					<< " ]" << std::endl;
 		}
 	}
 	else if (commands[0] == "channels") {
@@ -382,9 +323,9 @@ void  Server::manageServerInput()
 		std::cout << "Available channels: " << std::endl;
 		for (std::map<std::string, Channel *>::iterator it = _channel.begin(); it != _channel.end(); ++it) {
 			std::cout << "[ Channel name: " << it->first 
-					  << ", Max users: " << it->second->getMaxUsers() 
-					  << ", Password: " << it->second->getPass() << " ]"
-					  << std::endl;
+					<< ", Max users: " << it->second->getMaxUsers() 
+					<< ", Password: " << it->second->getPass() << " ]"
+					<< std::endl;
 		}
 	}
 	else if (commands[0] == "clear" || commands[0] == "cls")
@@ -424,48 +365,39 @@ void Server::run()
 	{
 		std::cout << PINK << "Waiting for events..." << CLEAR << std::endl << std::endl;
 		int numEvents = epoll_wait(_epollFd, events, MAX_EVENTS, -1);
-		std::cout << PINK << "RUN DMK 1..." << CLEAR << std::endl << std::endl;
+		
 		if (numEvents < 0) 
 		{
-			std::cout << PINK << "RUN DMK 2..." << CLEAR << std::endl << std::endl;
 			if (errno == EINTR) 
 			{
 				std::cout << "Closing server by signal..." << std::endl;
 				_running = false;
 				return;
 			}
-			std::cout << PINK << "RUN DMK 3..." << CLEAR << std::endl << std::endl;
 			throw std::runtime_error("When waiting for events");
 		}
 		try 
 		{
-			std::cout << PINK << "RUN DMK 4..." << CLEAR << std::endl << std::endl;
 			for (int i = 0; i < numEvents; i++) 
 			{
-				std::cout << PINK << "RUN DMK 5..." << CLEAR << std::endl << std::endl;
 				if (events[i].data.fd == STDIN_FILENO) 
 				{
-					std::cout << PINK << "RUN DMK 6..." << CLEAR << std::endl << std::endl;
 					manageServerInput();
 				}
 				else if (events[i].data.fd == _socketFd)
 				{
-					std::cout << PINK << "RUN DMK 7..." << CLEAR << std::endl << std::endl;
 					connectNewClient();
 				}
 				else 
 				{
-					std::cout << PINK << "RUN DMK 8..." << CLEAR << std::endl << std::endl;
 					int fd = events[i].data.fd;
 
 					if (events[i].events & EPOLLIN)
 					{
-						std::cout << PINK << "RUN DMK 9..." << CLEAR << std::endl << std::endl;
 						readMsg(fd);
 					}
 					if (events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
 					{
-						std::cout << PINK << "RUN DMK 10..." << CLEAR << std::endl << std::endl;
 						disconnectClient(fd);
 					}
 				}
@@ -476,5 +408,5 @@ void Server::run()
 			std::cerr << RED << "Error: " << CLEAR << e.what() << std::endl;
 		}
 	}
-	std::cout << PINK << "RUN DMK 11..." << CLEAR << std::endl << std::endl;
+	
 }
